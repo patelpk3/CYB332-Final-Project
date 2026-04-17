@@ -7,8 +7,6 @@ from agents.recon import run_recon
 
 load_dotenv()
 
-orchestrator("google.com")
-
 def mock_llm(state: MessagesState):
     return {"messages": [{"role": "ai", "content": "hello world"}]}
 
@@ -23,7 +21,7 @@ graph.invoke({"messages": [{"role": "user", "content": "hi!"}]})
 
 def menu():
     options = {
-        "orchestrator": orchestrator,
+        "orchestrator": orchestrator("google.com"),
         "recon": run_recon,
     }
 
