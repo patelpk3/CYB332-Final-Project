@@ -1,7 +1,7 @@
 import json
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from agents.recon import run_recon
 
 load_dotenv("enviro_key")
