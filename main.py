@@ -1,8 +1,13 @@
 from langgraph.graph import StateGraph, MessagesState, START, END
 from dotenv import load_dotenv
 
+# local files
+from agents.orchestrator import orchestrator
+from agents.recon import run_recon
 
 load_dotenv()
+
+orchestrator("google.com")
 
 def mock_llm(state: MessagesState):
     return {"messages": [{"role": "ai", "content": "hello world"}]}
