@@ -94,8 +94,78 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             "recommened_checks": [
                 "Determine whether the service is required",
                 "Replace with SSH if applicable",
-                "Outdated service/version review"
+                "Restrict network exposure as soon as possible"
             ]
         })
-
+    elif service in ["smtp"]:
+        finding.update({
+            "attack_surface": "mail service",
+            "vul_classes": [
+                "Open relay and misconfiguration risk",
+                "User enumeration exposure",
+                "Outdated service/version review needed"
+            ],
+            "severity": "medium",
+            "confidence": "medium",
+            "reasoning": "Exposed mail services need to be reviewed for relay restrictions, enumeration behavior, and patch level",
+            "recommened_checks": [
+                "Check relay restrictions",
+                "Review SMTP banner and software version",
+                "Assess exposure to user enumeration"
+            ]
+        })
+    elif service in ["domain", "dns"]:
+        finding.update({
+            "attack_surface": "name resolution infrastructure",
+            "vul_classes": [
+                "Open recursion risk",
+                "Zone transfer misconfiguration",
+                "Amplify abuse exposure"
+            ],
+            "severity": "medium",
+            "confidence": "medium",
+            "reasoning": "DNS services can expose configuration weaknesses that can affect integrity and abuse resistance",
+            "recommened_checks": [
+                "Check for open recursion",
+                "Check whether zone transfer is restricted",
+                "Review external exposure and rate limiting"
+            ]
+        })
+    elif service in ["mysql", "postgresql", "mssql", "mongobd", "redis"]:
+        finding.update({
+            "attack_surface": "database services",
+            "vul_classes": [
+                "Direct database exposure",
+                "Weak authentication exposure",
+                "Misconfiguration risk",
+                "Outdate service/version review"
+            ],
+            "severity": "high",
+            "confidence": "high",
+            "reasoning": "Directly exposed database services materiall increase attack surface and need close review",
+            "recommened_checks": [
+                "Verify network access restrictions",
+                "Review authentication configuration",
+                "Review software version against current advisories"
+            ]
+        })
+    else:
+        finding.update({
+            "attack_surface": "network-exposed serivce",
+            "vul_classes": [
+                "General exposed service review",
+                "Outdated service/version review",
+                "Configuration review needed"
+            ],
+            "severity": "low",
+            "confidence": "low",
+            "reasoning": "The service is externally exposed but does not match a specialized mapping rule",
+            "recommened_checks": [
+                "Validate service necessity",
+                "Review software version",
+                "Review access restrictions and configuration"
+            ]
+        })
     return finding
+
+#Still need 3 more methods to be finished
