@@ -19,3 +19,16 @@ graph.add_edge("mock_llm", END)
 graph = graph.compile()
 
 graph.invoke({"messages": [{"role": "user", "content": "hi!"}]})
+
+
+def menu():
+    options = {
+        "orchestrator": orchestrator,
+        "recon": run_recon,
+    }
+
+    for i, opt in enumerate(options, 1):
+        print(f"{i}. {opt}")
+
+    choice = int(input("Select: ")) - 1
+menu()
