@@ -1,10 +1,17 @@
 import json
+from dotenv import load_dotenv
+from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 
 
 def safe_json_parse(content: str, fallback: dict) -> dict:
     try:
-        return json.loads(content)
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("```", 2)[1]
+            if content.startswith("json"):
+                content = content[4:]
+        return json.loads(content.strip())
     except Exception:
         return fallback
 
@@ -58,3 +65,24 @@ Return ONLY valid JSON in this format:
 
     print("[Report Writer] Done.")
     return result
+
+
+if __name__ == "__main__":
+    load_dotenv(".enviro_key")
+    llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
+
+    test_target = "scanme.nmap.org"
+    test_plan = {"plan": ["run nmap", "run whois"], "tools": ["nmap", "whois"], "reasoning": "default test"}
+    test_recon = {
+        "nmap": {"open_ports": [22, 80], "services": {"22": "ssh", "80": "http"}},
+        "whois": {"registrar": "Test Registrar", "country": "US"}
+    }
+    test_vulns = {
+        "findings": [
+            {"service": "ssh", "port": 22, "severity": "medium"},
+            {"service": "http", "port": 80, "severity": "medium"}
+        ]
+    }
+
+    report = generate_report(test_target, test_plan, test_recon, test_vulns, llm)
+    print(json.dumps(report, indent=2))

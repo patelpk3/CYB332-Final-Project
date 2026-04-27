@@ -3,8 +3,7 @@ from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from agents.recon import run_recon
-
-load_dotenv("enviro_key")
+load_dotenv(".enviro_key")
 
 # Set the LLM we are using, haiku
 llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
@@ -59,7 +58,7 @@ def orchestrator(target: str) -> dict:
     print(f"\nOrchastator sending out recon agent...")
     recon_findings = run_recon(target)
 
-    # Aggregate findings from all agents
+    # Paste the findings from all agents
     findings = {
         "status": "success",
         "target": target,
@@ -73,4 +72,4 @@ def orchestrator(target: str) -> dict:
 
 if __name__ == "__main__":
     results = orchestrator("scanme.nmap.org")
-    print(json.dumps(results, indent=2))
+print(json.dumps(results, indent=2))
