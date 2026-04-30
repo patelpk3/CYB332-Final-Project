@@ -3,7 +3,8 @@ from dotenv import load_dotenv
 # local files
 from agents.orchestrator import orchestrator
 from agents.recon import run_recon
-from agents.vul_anal import print_vul_info 
+from agents.report_writer import generate_report
+#from agents.vul_anal import print_vul_info 
 
 load_dotenv()
 
@@ -15,7 +16,7 @@ def menu():
     options = {
         "orchestrator": orchestrator("google.com"),
         "recon": run_recon,
-        "vul_anal": print_vul_info,
+#        "vul_anal": print_vul_info,
         "report_writer": generate_report
     }
 
