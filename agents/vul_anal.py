@@ -168,4 +168,100 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
         })
     return finding
 
-#Still need 3 more methods to be finished
+def build_rule_based_findings(recon_data: dict) -> list:
+    findings = []
+    nmap_result = recon_data.get("nmap", {})
+
+    if nmap_result.get("status") != "success":
+        return findings
+    
+    for entry in nmap_result.get("open_ports", []):
+        service = entry.get("service", "unknown")
+        port = entry.get("port")
+        version = entry.get("version", "unknown")
+        findings.append(map_service_to_vul(service, port, version))
+    return findings
+
+
+def summary_with_llm(target: str, recon_data: dict, rule_findings: list) -> dict:
+    messages = [
+        SystemMessage(content"""
+You are a cybersecurity vulnerability analysis assistant.
+You analyze reconnaissance results and map them to their respective vulnerability class.
+
+Rules:
+- Respond only in valid JSON
+- Do not provide explotation steps, payloads, commands, or attack instructions
+- Do not claim a host is definitely vulnerable based only on service discovery
+- Frame conclusions as hypotheses, risk indicators, or items for verification
+- Focus on exposed services, likely attack surfaces, severity, confidence, and recommended defensive checks
+
+Return JSON in this format:
+{
+    "summary": "short summary",
+    "priority_assessment": "short priority statement",
+    "top_risks": [
+        {
+            "service": "name",
+            "port": 0,
+            "risk": "short description",
+            "severity": "low|medium|high|critical",
+            "confidence": "low|medium|high"
+        }
+],
+"overall_recommendations": [
+        "item 1"
+        "item 2"
+    ]
+}
+"""), 
+        HumanMessage(content=f"""
+Target: {target}
+
+Recon data: 
+{json.dumps(recon_data, indent=2)}
+
+Rule-based findings:
+{json.dumps(rule_findings, indent=2)}
+
+Generate a concise vulnerability analyst assessment
+""")
+    ]
+    response = llm.invoke(messages)
+
+    try:
+        return json.loads(response.content)
+    except Exception:
+        return {
+            "summary": "Unable to parse LLM summary; falling back to rule-based analysis only."
+            "priority_assessment": "Review highest severity exposed services first."
+            "top_risks": [],
+            "overall_recommendations": [
+                "Validate externally exposed services",
+                "Review service versions and configurations",
+                "Minimize unnecessary exposure"
+            ]
+        }
+
+def run_vul_anal(target: str, recon_data: dict) -> dict:
+      try:
+            rule_findings = build_rule_based_findings(recon_data)
+            llm_summary = summary_with_llm(target, recon_data, rule_findings)
+
+            return {
+                  "agent": "vulnerability_analyst",
+                  "target": target,
+                  "status": "success",
+                  "summary": llm_summary.get("summary", "Analysis complete."),
+                  "priority_assessment": llm_summary.get("priority_assessment", ""),
+                  "findings": rule_findings,
+                  "top_risks": llm_summary.get("top_risks", []),
+                  "overall_recommendations": llm_summary.get("overall_recommendations", [])
+            }
+      except Exception as err:
+            return {
+                  "agent": "vulnerability_analyst",
+                  "target": target,
+                  "status": "error",
+                  "error": str(err)
+            }
