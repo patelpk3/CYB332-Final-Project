@@ -1,5 +1,7 @@
 from tools.nmap_tool import run_nmap
 from tools.whois_tool import run_whois
+from tools.hping3_tool import run_hping3
+
 
 def run_recon(target: str) -> dict:
     print(f"\n Starting recon on: {target}")
@@ -7,11 +9,20 @@ def run_recon(target: str) -> dict:
     nmap_results = run_nmap(target)
     whois_results = run_whois(target)
 
+    hping_port = 80
+
+    open_ports = nmap_results.get("open_ports", [])
+    if open_ports:
+        hping_port = open_ports[0].get("port", 80)
+
+    hping3_results = run_hping3(target, port=hping_port, count=3)
+
     print(f"Recon complete.")
 
     return {
         "status": "success",
         "target": target,
         "nmap": nmap_results,
-        "whois": whois_results
+        "whois": whois_results,
+        "hping3": hping3_results
     }

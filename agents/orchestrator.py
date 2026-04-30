@@ -37,7 +37,7 @@ def orchestrator(target: str) -> dict:
         Always respond in valid JSON format like:
         {
             "plan": ["step1", "step2"],
-            "tools": ["nmap", "whois"],
+            "tools": ["nmap", "whois", "hping3"],
             "reasoning": "why these tools"
         }
         """),
@@ -54,7 +54,11 @@ def orchestrator(target: str) -> dict:
                 content = content[4:]
         plan = json.loads(content.strip())
     except Exception:
-        plan = {"plan": ["run nmap", "run whois"], "tools": ["nmap", "whois"], "reasoning": "default fallback"}
+        plan = {
+    "plan": ["run nmap", "run whois", "run hping3 tcp syn probe"],
+    "tools": ["nmap", "whois", "hping3"],
+    "reasoning": "default fallback"
+}
 
     print(f"Plan: {json.dumps(plan, indent=2)}")
 
