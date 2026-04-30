@@ -16,7 +16,7 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
         "service": service,
         "port": port,
         "version": version,
-        "attack_surface": "unkown",
+        "attack_surface": "unknown",
         "vul_classes": [],
         "severity": "low",
         "confidence": "low",
@@ -34,8 +34,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             ],
             "severity": "medium",
             "confidence": "medium",
-            "reasoning": "SSH is externally exposed and needs review for authenication policy, administrative restrictions, and software patch",
-            "recommened_checks": [
+            "reasoning": "SSH is externally exposed and needs review for authentication policy, administrative restrictions, and software patch",
+            "recommended_checks": [
                 "Verify whether password authentication is enabled",
                 "Verify whether root login is disabled",
                 "Review SSH version to current security advice",
@@ -55,7 +55,7 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             "severity": "medium",
             "confidence": "medium",
             "reasoning": "An exposed web service may introduce application-layer and configuration-based risk depending on versions and configuration",
-            "recommened_checks": [
+            "recommended_checks": [
                 "Review server banners and exposed headers",
                 "Check for default pages, portals, and directory listings",
                 "Review TLS configuration if HTTPs is present",
@@ -74,13 +74,13 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             "severity": "high",
             "confidence": "high",
             "reasoning": "FTP presents elevated risk due to insecure transport and misconfiguration",
-            "recommened_checks": [
+            "recommended_checks": [
                 "Verify whether anonymous login is disabled",
                 "Confirm wheteher encrypted alternatives are needed",
                 "Review FTP version to current security advice"
             ]
         })
-    elif service == "telenet":
+    elif service == "telnet":
         finding.update({
             "attack_surface": "remote administrative access",
             "vul_classes": [
@@ -90,8 +90,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             ],
             "severity": "critical",
             "confidence": "high",
-            "reasoning": "Telenet is a legacy plaintext admisitration service and is usually critical risk when exposed",
-            "recommened_checks": [
+            "reasoning": "Telnet is a legacy plaintext administration service and is usually critical risk when exposed",
+            "recommended_checks": [
                 "Determine whether the service is required",
                 "Replace with SSH if applicable",
                 "Restrict network exposure as soon as possible"
@@ -108,7 +108,7 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             "severity": "medium",
             "confidence": "medium",
             "reasoning": "Exposed mail services need to be reviewed for relay restrictions, enumeration behavior, and patch level",
-            "recommened_checks": [
+            "recommended_checks": [
                 "Check relay restrictions",
                 "Review SMTP banner and software version",
                 "Assess exposure to user enumeration"
@@ -125,13 +125,13 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             "severity": "medium",
             "confidence": "medium",
             "reasoning": "DNS services can expose configuration weaknesses that can affect integrity and abuse resistance",
-            "recommened_checks": [
+            "recommended_checks": [
                 "Check for open recursion",
                 "Check whether zone transfer is restricted",
                 "Review external exposure and rate limiting"
             ]
         })
-    elif service in ["mysql", "postgresql", "mssql", "mongobd", "redis"]:
+    elif service in ["mysql", "postgresql", "mssql", "mongodb", "redis"]:
         finding.update({
             "attack_surface": "database services",
             "vul_classes": [
@@ -142,8 +142,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             ],
             "severity": "high",
             "confidence": "high",
-            "reasoning": "Directly exposed database services materiall increase attack surface and need close review",
-            "recommened_checks": [
+            "reasoning": "Directly exposed database services materially increase attack surface and need close review",
+            "recommended_checks": [
                 "Verify network access restrictions",
                 "Review authentication configuration",
                 "Review software version against current advisories"
@@ -160,7 +160,7 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             "severity": "low",
             "confidence": "low",
             "reasoning": "The service is externally exposed but does not match a specialized mapping rule",
-            "recommened_checks": [
+            "recommended_checks": [
                 "Validate service necessity",
                 "Review software version",
                 "Review access restrictions and configuration"
@@ -185,7 +185,7 @@ def build_rule_based_findings(recon_data: dict) -> list:
 
 def summary_with_llm(target: str, recon_data: dict, rule_findings: list) -> dict:
     messages = [
-        SystemMessage(content"""
+        SystemMessage(content="""
 You are a cybersecurity vulnerability analysis assistant.
 You analyze reconnaissance results and map them to their respective vulnerability class.
 
@@ -233,8 +233,8 @@ Generate a concise vulnerability analyst assessment
         return json.loads(response.content)
     except Exception:
         return {
-            "summary": "Unable to parse LLM summary; falling back to rule-based analysis only."
-            "priority_assessment": "Review highest severity exposed services first."
+            "summary": "Unable to parse LLM summary; falling back to rule-based analysis only.",
+            "priority_assessment": "Review highest severity exposed services first.",
             "top_risks": [],
             "overall_recommendations": [
                 "Validate externally exposed services",
