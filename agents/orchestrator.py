@@ -3,23 +3,23 @@ from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from agents.recon import run_recon
+from agents.vul_anal import map_service_to_vul
+from agents.report_writer import generate_report
+
 load_dotenv(".enviro_key")
 
-# Set the LLM we are using, haiku
 llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
 
 #This scope is just for the first push
 #IMPORTANT: need to change this when the VM is fully running
-SCOPE = ["scanme.nmap.org", "192.168.1.0/24"]
+SCOPE = ["127.0.0.1", "192.168.1.0/24"]
 
-#Verify the scope
 def is_in_scope(target: str) -> bool:
     return any(target in scope for scope in SCOPE)
 
 def orchestrator(target: str) -> dict:
     print(f"\n Orchestrator has received target: {target}")
 
-    # SCOPE error handle
     if not is_in_scope(target):
         print(f" The target {target} is out of scope, stopping execute.")
         return {
@@ -28,10 +28,9 @@ def orchestrator(target: str) -> dict:
             "target": target
         }
 
-    #Confirm target is valid to user
     print(f" Target is in scope.")
 
-    # Ask our LLM to plan the recon task sequence
+    # Plan recon tasks
     messages = [
         SystemMessage(content="""You are a penetration testing orchestrator.
         Your job is to plan reconnaissance tasks for a given target.
@@ -48,28 +47,44 @@ def orchestrator(target: str) -> dict:
     plan_response = llm.invoke(messages)
 
     try:
-        plan = json.loads(plan_response.content)
+        content = plan_response.content.strip()
+        if content.startswith("```"):
+            content = content.split("```", 2)[1]
+            if content.startswith("json"):
+                content = content[4:]
+        plan = json.loads(content.strip())
     except Exception:
         plan = {"plan": ["run nmap", "run whois"], "tools": ["nmap", "whois"], "reasoning": "default fallback"}
 
     print(f"Plan: {json.dumps(plan, indent=2)}")
 
-    # Dispatch recon agent
-    print(f"\nOrchastator sending out recon agent...")
+    # Recon agent
+    print(f"\nOrchestrator sending out recon agent...")
     recon_findings = run_recon(target)
 
-    # Paste the findings from all agents
-    findings = {
-        "status": "success",
-        "target": target,
-        "plan": plan,
-        "recon": recon_findings
-    }
+    # Vulnerability analysis agent
+    print(f"\nOrchestrator sending out vulnerability analysis agent...")
+    vuln_findings = []
+    nmap_data = recon_findings.get("nmap", {})
+    for entry in nmap_data.get("open_ports", []):
+        result = map_service_to_vul(
+            service=entry.get("service", ""),
+            port=entry.get("port", 0),
+            version=entry.get("version", "unknown")
+        )
+        vuln_findings.append(result)
 
-    print(f"\nAll agents complete. Findings are being printed.")
-    return findings
+    vuln_data = {"status": "success", "findings": vuln_findings}
+    print(f"Vulnerability analysis complete. {len(vuln_findings)} finding(s).")
+
+    # Report writer agent
+    print(f"\nOrchestrator sending out report writer agent...")
+    report = generate_report(target, plan, recon_findings, vuln_data, llm)
+
+    print(f"\nAll agents complete.")
+    return report
 
 
 if __name__ == "__main__":
-    results = orchestrator("scanme.nmap.org")
-print(json.dumps(results, indent=2))
+    results = orchestrator("127.0.0.1")
+    print(json.dumps(results, indent=2))

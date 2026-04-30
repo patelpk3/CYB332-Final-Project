@@ -71,7 +71,7 @@ if __name__ == "__main__":
     load_dotenv(".enviro_key")
     llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
 
-    test_target = "scanme.nmap.org"
+    test_target = "127.0.0.1"
     test_plan = {"plan": ["run nmap", "run whois"], "tools": ["nmap", "whois"], "reasoning": "default test"}
     test_recon = {
         "nmap": {"open_ports": [22, 80], "services": {"22": "ssh", "80": "http"}},

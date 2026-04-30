@@ -52,5 +52,5 @@ def run_nmap(target: str) -> dict:
         }
 
 if __name__ == "__main__":
-    result = run_nmap("scanme.nmap.org")
+    result = run_nmap("127.0.0.1")
     print(json.dumps(result, indent=2))

@@ -9,7 +9,7 @@ load_dotenv("enviro_key")
 llm = ChatAnthropic(model = "claude-haiku-4-5-20251001")
 
 def map_service_to_vul (service: str, port: int, version: str) -> dict:
-    service = (service or "").lower
+    service = (service or "").lower()
     version = version or "unknown"
 
     finding = {

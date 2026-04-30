@@ -34,5 +34,5 @@ def run_whois(target: str) -> dict:
 
 
 if __name__ == "__main__":
-    result = run_whois("scanme.nmap.org")
+    result = run_whois("127.0.0.1")
     print(json.dumps(result, indent=2))
