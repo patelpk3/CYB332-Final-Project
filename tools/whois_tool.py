@@ -2,20 +2,19 @@ import whois
 import json
 
 def run_whois(target: str) -> dict:
-    """
-    Runs the tool whois lookup on the target and returns the results.
-    """
+    # Queries whois registration data for the target and returns key parsed fields
     print(f"Whois currently Looking up: {target}")
-    
+
     try:
         w = whois.whois(target)
-        
+
         return {
             "tool": "whois",
             "target": target,
             "status": "success",
             "parsed_fields": {
                 "registrar": w.registrar,
+                # str() handles cases where the library returns a list of datetimes instead of one
                 "creation_date": str(w.creation_date),
                 "expiration_date": str(w.expiration_date),
                 "name_servers": w.name_servers,
@@ -23,7 +22,7 @@ def run_whois(target: str) -> dict:
                 "organization": w.org
             }
         }
-    
+
     except Exception as err:
         return {
             "tool": "whois",
@@ -34,5 +33,6 @@ def run_whois(target: str) -> dict:
 
 
 if __name__ == "__main__":
+    # Smoke test — localhost won't return real whois data but confirms no import/runtime errors
     result = run_whois("127.0.0.1")
     print(json.dumps(result, indent=2))

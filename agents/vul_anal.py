@@ -1,17 +1,19 @@
-#vulnerability analysis
+# Vulnerability analysis agent — maps discovered services to risk classes using rules + LLM summary
 import json
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 
-#target is metasploit
+# Load API key and initialize the LLM at module level so it's shared across all functions
 load_dotenv("enviro_key")
 llm = ChatAnthropic(model = "claude-haiku-4-5-20251001")
 
-def map_service_to_vul (service: str, port: int, version: str) -> dict:
+def map_service_to_vul(service: str, port: int, version: str) -> dict:
+    # Normalize inputs so comparisons are case-insensitive and version is never None
     service = (service or "").lower()
     version = version or "unknown"
 
+    # Default finding used as a base; each service block below overrides only the relevant fields
     finding = {
         "service": service,
         "port": port,
@@ -24,6 +26,7 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
         "recommended_checks": []
     }
 
+    # SSH — externally exposed admin access; medium severity because auth policy varies per host
     if service in ["ssh", "openssh"]:
         finding.update({
             "attack_surface": "remote administrative access",
@@ -43,6 +46,7 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
             ]
         })
 
+    # HTTP/HTTPS — web servers carry broad application-layer and configuration risk
     elif service in ["http", "https", "apache", "nginx"]:
         finding.update({
             "attack_surface": "web application / web server",
@@ -62,6 +66,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
                 "Review versions against current security advice"
             ]
         })
+
+    # FTP — cleartext protocol; high severity because credentials are sent unencrypted
     elif service in ["ftp", "vsftpd"]:
         finding.update({
             "attack_surface": "file transfer service",
@@ -80,6 +86,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
                 "Review FTP version to current security advice"
             ]
         })
+
+    # Telnet — plaintext remote admin; critical because there is no encryption whatsoever
     elif service == "telnet":
         finding.update({
             "attack_surface": "remote administrative access",
@@ -97,6 +105,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
                 "Restrict network exposure as soon as possible"
             ]
         })
+
+    # SMTP — mail relay misconfigurations and user enumeration are common issues
     elif service in ["smtp"]:
         finding.update({
             "attack_surface": "mail service",
@@ -114,6 +124,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
                 "Assess exposure to user enumeration"
             ]
         })
+
+    # DNS — open recursion and unrestricted zone transfers are the primary concerns
     elif service in ["domain", "dns"]:
         finding.update({
             "attack_surface": "name resolution infrastructure",
@@ -131,6 +143,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
                 "Review external exposure and rate limiting"
             ]
         })
+
+    # Databases — direct internet exposure is high risk regardless of auth strength
     elif service in ["mysql", "postgresql", "mssql", "mongodb", "redis"]:
         finding.update({
             "attack_surface": "database services",
@@ -149,6 +163,8 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
                 "Review software version against current advisories"
             ]
         })
+
+    # Fallback for any service not covered by the rules above
     else:
         finding.update({
             "attack_surface": "network-exposed serivce",
@@ -169,12 +185,14 @@ def map_service_to_vul (service: str, port: int, version: str) -> dict:
     return finding
 
 def build_rule_based_findings(recon_data: dict) -> list:
+    # Iterates over every open port from the port scan results and maps each service to its findings
     findings = []
     nmap_result = recon_data.get("nmap", {})
 
+    # Skip analysis entirely if the port scan did not complete successfully
     if nmap_result.get("status") != "success":
         return findings
-    
+
     for entry in nmap_result.get("open_ports", []):
         service = entry.get("service", "unknown")
         port = entry.get("port")
@@ -184,6 +202,7 @@ def build_rule_based_findings(recon_data: dict) -> list:
 
 
 def summary_with_llm(target: str, recon_data: dict, rule_findings: list) -> dict:
+    # Sends recon data and rule-based findings to the LLM for a higher-level risk summary
     messages = [
         SystemMessage(content="""
 You are a cybersecurity vulnerability analysis assistant.
@@ -214,11 +233,11 @@ Return JSON in this format:
         "item 2"
     ]
 }
-"""), 
+"""),
         HumanMessage(content=f"""
 Target: {target}
 
-Recon data: 
+Recon data:
 {json.dumps(recon_data, indent=2)}
 
 Rule-based findings:
@@ -232,6 +251,7 @@ Generate a concise vulnerability analyst assessment
     try:
         return json.loads(response.content)
     except Exception:
+        # LLM response was not valid JSON; return a safe default so the pipeline can still continue
         return {
             "summary": "Unable to parse LLM summary; falling back to rule-based analysis only.",
             "priority_assessment": "Review highest severity exposed services first.",
@@ -244,24 +264,29 @@ Generate a concise vulnerability analyst assessment
         }
 
 def run_vul_anal(target: str, recon_data: dict) -> dict:
-      try:
-            rule_findings = build_rule_based_findings(recon_data)
-            llm_summary = summary_with_llm(target, recon_data, rule_findings)
+    # Entry point for the vulnerability analysis agent — called by the main pipeline
+    try:
+        # Step 1: apply deterministic rule-based mapping to each discovered service
+        rule_findings = build_rule_based_findings(recon_data)
 
-            return {
-                  "agent": "vulnerability_analyst",
-                  "target": target,
-                  "status": "success",
-                  "summary": llm_summary.get("summary", "Analysis complete."),
-                  "priority_assessment": llm_summary.get("priority_assessment", ""),
-                  "findings": rule_findings,
-                  "top_risks": llm_summary.get("top_risks", []),
-                  "overall_recommendations": llm_summary.get("overall_recommendations", [])
-            }
-      except Exception as err:
-            return {
-                  "agent": "vulnerability_analyst",
-                  "target": target,
-                  "status": "error",
-                  "error": str(err)
-            }
+        # Step 2: send findings to the LLM for a prioritized, natural-language risk summary
+        llm_summary = summary_with_llm(target, recon_data, rule_findings)
+
+        return {
+              "agent": "vulnerability_analyst",
+              "target": target,
+              "status": "success",
+              "summary": llm_summary.get("summary", "Analysis complete."),
+              "priority_assessment": llm_summary.get("priority_assessment", ""),
+              "findings": rule_findings,
+              "top_risks": llm_summary.get("top_risks", []),
+              "overall_recommendations": llm_summary.get("overall_recommendations", [])
+        }
+    except Exception as err:
+        # Return a structured error so the caller can handle failure gracefully
+        return {
+              "agent": "vulnerability_analyst",
+              "target": target,
+              "status": "error",
+              "error": str(err)
+        }
