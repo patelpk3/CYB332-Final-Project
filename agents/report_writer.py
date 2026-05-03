@@ -2,7 +2,7 @@ import json
 from dotenv import load_dotenv
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
-
+load_dotenv(".enviro_key")
 
 def safe_json_parse(content: str, fallback: dict) -> dict:
     # Strip markdown code fences (```json ... ```) that the LLM sometimes wraps around JSON
@@ -78,7 +78,6 @@ Return ONLY valid JSON in this format:
 
 if __name__ == "__main__":
     # Load API keys from the project-specific env file
-    load_dotenv(".enviro_key")
     llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
 
     # Sample data to test the report writer in isolation without running the full pipeline

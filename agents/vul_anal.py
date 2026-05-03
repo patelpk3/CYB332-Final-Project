@@ -5,7 +5,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 
 # Load API key and initialize the LLM at module level so it's shared across all functions
-load_dotenv("enviro_key")
+load_dotenv(".enviro_key")
 llm = ChatAnthropic(model = "claude-haiku-4-5-20251001")
 
 def map_service_to_vul(service: str, port: int, version: str) -> dict:
@@ -249,7 +249,12 @@ Generate a concise vulnerability analyst assessment
     response = llm.invoke(messages)
 
     try:
-        return json.loads(response.content)
+        content = response.content.strip()
+        if content.startswith("```"):
+            content = content.split("```", 2)[1]
+            if content.startswith("json"):
+                content = content[4:]
+        return json.loads(content.strip())
     except Exception:
         # LLM response was not valid JSON; return a safe default so the pipeline can still continue
         return {

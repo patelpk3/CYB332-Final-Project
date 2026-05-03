@@ -9,7 +9,7 @@ def run_nmap(target: str) -> dict:
     
     try:
         scanner = nmap.PortScanner()
-        scanner.scan(target, arguments="-sV -T4 --open")
+        scanner.scan(target, arguments="-sV -T4")
 
         # Get actual host key, Nmap typically stores by IP
         #  We would rather have the hostname
