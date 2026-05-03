@@ -19,7 +19,7 @@ logging.basicConfig(
 llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
 
 # Gaurdrail trade off, this can be updated before running
-SCOPE = ["127.0.0.1", "scanme.nmap.org", "testphp.vulnweb.com", "172.17.0.2", "10.0.2.15"]
+SCOPE = ["127.0.0.1", "scanme.org", "testphp.vulnweb.com", "172.17.0.2", "10.0.2.15"]
 #scope checking/blocking 
 def is_in_scope(target: str) -> bool:
     blocked = ["0.0.0.0", "255.255.255.255", ""]
