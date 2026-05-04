@@ -9,13 +9,13 @@ from agents.report_writer import generate_report
 
 load_dotenv(".enviro_key")
 
-# Logging setup — creates pentest_log.txt automatically
+# Logging setup — creates LLM_log.txt automatically
 logging.basicConfig(
     filename="LLM_log.txt",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
+#LLM model that we use as well as tokens, can be changed
 llm = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=5000)
 
 # Gaurdrail trade off, this can be updated before running
@@ -26,7 +26,7 @@ def is_in_scope(target: str) -> bool:
     if target.strip() in blocked:
         return False
     return target.strip() in SCOPE
-#Orchestrator communication
+#Orchestrator communication for logging
 def orchestrator(target: str) -> dict:
     print(f"\n Orchestrator has received target: {target}")
     logging.info(f"Target received: {target}")
@@ -79,7 +79,7 @@ def orchestrator(target: str) -> dict:
             "tools": ["nmap", "whois", "hping3"],
             "reasoning": "default fallback"
         }
-
+#More user communcation
     print(f"Plan: {json.dumps(plan, indent=2)}")
     logging.info(f"Plan generated: {json.dumps(plan)}")
 
@@ -101,7 +101,7 @@ def orchestrator(target: str) -> dict:
     print(f"\nAll agents complete.")
     return report
 
-
+#used for testing the agent itself
 if __name__ == "__main__":
     results = orchestrator("127.0.0.1")
     print(json.dumps(results, indent=2))
