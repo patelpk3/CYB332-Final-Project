@@ -6,7 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 
 # Load API key and initialize the LLM at module level so it's shared across all functions
 load_dotenv(".enviro_key")
-llm = ChatAnthropic(model = "claude-haiku-4-5-20251001")
+llm = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=5000)
 
 def map_service_to_vul(service: str, port: int, version: str) -> dict:
     # Normalize inputs so comparisons are case-insensitive and version is never None

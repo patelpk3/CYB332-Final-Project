@@ -16,7 +16,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
+llm = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=5000)
 
 # Gaurdrail trade off, this can be updated before running
 SCOPE = ["127.0.0.1", "scanme.org", "testphp.vulnweb.com", "172.17.0.2", "10.0.2.15"]

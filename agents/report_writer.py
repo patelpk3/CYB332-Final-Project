@@ -78,7 +78,7 @@ Return ONLY valid JSON in this format:
 
 if __name__ == "__main__":
     # Load API keys from the project-specific env file
-    llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
+    llm = ChatAnthropic(model="claude-haiku-4-5-20251001", max_tokens=5000)
 
     # Sample data to test the report writer in isolation without running the full pipeline
     test_target = "127.0.0.1"
