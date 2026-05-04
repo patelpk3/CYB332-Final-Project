@@ -27,10 +27,13 @@ def generate_report(target: str, plan: dict, recon_data: dict, vuln_data: dict, 
     # System prompt instructs the LLM to act as a report writer and enforces strict JSON output
     # The format mirrors a real penetration test report: summary, findings, risk, and next steps
     messages = [
-        SystemMessage(content="""You are a penetration testing report writer.
+       SystemMessage(content="""You are a penetration testing report writer.
 
 Create a structured penetration testing report using ONLY the provided data.
 Do not invent vulnerabilities.
+You MUST include every single finding from the vulnerabilities data provided.
+Do not group, merge, or skip any findings. Each finding gets its own entry.
+The number of findings in your output must match the number provided to you exactly.
 
 Return ONLY valid JSON in this format:
 {

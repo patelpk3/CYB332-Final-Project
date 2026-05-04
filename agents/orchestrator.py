@@ -42,20 +42,27 @@ def orchestrator(target: str) -> dict:
 
     print(f" Target is in scope.")
 
-    # Plan recon tasks
+    # Prompt engi, giving its purpose
     messages = [
-        SystemMessage(content="""You are a penetration testing orchestrator.
-        Your job is to plan reconnaissance tasks for a given target.
-        Always respond in valid JSON format like:
-        {
-            "plan": ["step1", "step2"],
-            "tools": ["nmap", "whois", "hping3"],
-            "reasoning": "why these tools"
-        }
-        """),
-        HumanMessage(content=f"Plan a recon task for target: {target}")
-    ]
+    SystemMessage(content="""You are a penetration testing orchestrator.
+    Your job is to plan reconnaissance tasks for a given target.
 
+    IMPORTANT: You only have access to these three tools:
+    - nmap: port scanning and service enumeration
+    - whois: domain registration and IP lookup
+    - hping3: TCP packet probing and port verification
+
+    Always respond in valid JSON format like:
+    {
+        "plan": ["step1", "step2"],
+        "tools": ["nmap", "whois", "hping3"],
+        "reasoning": "why these tools and what each will discover"
+    }
+
+    Only include tools from the list above. Do not suggest tools that are not available.
+    """),
+    HumanMessage(content=f"Plan a recon task for target: {target}")
+]
     plan_response = llm.invoke(messages)
     logging.info(f"LLM plan response: {plan_response.content}")
 
